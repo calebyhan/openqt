@@ -366,6 +366,9 @@ verify_jwt = false
 [functions.web-push]
 verify_jwt = false   # caller auth is handled inside the function (supports both user JWT and service role)
 
+[functions.import-entry]
+verify_jwt = false   # function handles auth via getUser() internally
+
 [edge_runtime]
 enabled = true
 # Supported request policies: `oneshot`, `per_worker`.

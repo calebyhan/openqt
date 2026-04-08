@@ -6,8 +6,13 @@ export function useAuth() {
   const { setSession, clearSession } = useAuthStore()
 
   useEffect(() => {
-    // Hydrate session on mount
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // Hydrate session on mount. If the session JWT references a user that no
+    // longer exists (e.g. after a local db reset), getUser() will return an
+    // error and we clear the stale session so the user is redirected to login.
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!session) { clearSession(); return }
+      const { error } = await supabase.auth.getUser()
+      if (error) { await supabase.auth.signOut(); clearSession(); return }
       setSession(session)
     })
 

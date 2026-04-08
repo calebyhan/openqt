@@ -22,9 +22,7 @@ export default function JoinPage() {
     async function joinGroup() {
       setStatus('joining')
       const { data: group, error: findErr } = await supabase
-        .from('groups')
-        .select('id, name')
-        .eq('invite_code', inviteCode)
+        .rpc('find_group_by_invite_code', { code: inviteCode })
         .single()
 
       if (findErr || !group) {
@@ -33,12 +31,12 @@ export default function JoinPage() {
         return
       }
 
-      const { error: joinErr } = await supabase.from('group_members').upsert(
-        { group_id: group.id, user_id: user!.id, role: 'member' },
-        { onConflict: 'group_id,user_id', ignoreDuplicates: true },
-      )
+      const { error: joinErr } = await supabase
+        .from('group_members')
+        .insert({ group_id: group.id, user_id: user!.id, role: 'member' })
 
-      if (joinErr) {
+      // 23505 = unique_violation (already a member) — treat as success
+      if (joinErr && joinErr.code !== '23505') {
         setStatus('error')
         setMessage('Failed to join group. Please try again.')
         return

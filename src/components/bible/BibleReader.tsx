@@ -4,9 +4,11 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { fetchBooks, fetchChapters, fetchPassage } from '@/lib/bible'
+import { useAuthStore } from '@/store/authStore'
 import type { BibleBook, BibleChapter, BiblePassage } from '@/types/bible'
 
-const TRANSLATIONS = ['NIV', 'ESV', 'KJV', 'NLT', 'NASB', 'CSB']
+const TRANSLATIONS = ['NIV2011', 'ESV', 'NLT', 'NASB', 'NKJV', 'KJV', 'ASV', 'WEB']
+const TRANSLATION_LABELS: Record<string, string> = { NIV2011: 'NIV' }
 
 type View = 'books' | 'chapters' | 'passage'
 
@@ -19,7 +21,7 @@ interface Props {
 
 export default function BibleReader({
   onInsertVerse,
-  defaultTranslation = 'NIV',
+  defaultTranslation = 'NIV2011',
   onTranslationChange,
 }: Props) {
   const [translation, setTranslation] = useState(defaultTranslation)
@@ -35,14 +37,18 @@ export default function BibleReader({
   // Verse insertion: user types a verse number to insert
   const [verseInput, setVerseInput] = useState('')
 
+  const session = useAuthStore((s) => s.session)
+  const authLoading = useAuthStore((s) => s.loading)
+
   useEffect(() => {
+    if (authLoading || !session) return
     setLoading(true)
     setError(null)
     fetchBooks()
       .then((data: BibleBook[]) => setBooks(data))
       .catch(() => setError('Could not load books. Check your connection.'))
       .finally(() => setLoading(false))
-  }, [])
+  }, [session, authLoading])
 
   async function selectBook(book: BibleBook) {
     setSelectedBook(book)
@@ -123,12 +129,12 @@ export default function BibleReader({
         </span>
         <Select value={translation} onValueChange={handleTranslationChange}>
           <SelectTrigger className="h-7 w-20 text-xs">
-            <SelectValue />
+            <SelectValue>{TRANSLATION_LABELS[translation] ?? translation}</SelectValue>
           </SelectTrigger>
           <SelectContent>
             {TRANSLATIONS.map((t) => (
               <SelectItem key={t} value={t} className="text-xs">
-                {t}
+                {TRANSLATION_LABELS[t] ?? t}
               </SelectItem>
             ))}
           </SelectContent>

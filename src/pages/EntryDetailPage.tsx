@@ -4,6 +4,7 @@ import { ChevronLeft, Pencil } from 'lucide-react'
 import AppLayout from '@/components/layout/AppLayout'
 import { Button } from '@/components/ui/button'
 import TemplateForm from '@/components/editor/TemplateForm'
+import SharingDrawer from '@/components/sharing/SharingDrawer'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/authStore'
 import type { Tables } from '@/types/supabase'
@@ -118,14 +119,17 @@ export default function EntryDetailPage() {
             Back
           </button>
           {isOwn && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => navigate(`/write/${entry.id}`)}
-            >
-              <Pencil className="mr-1.5 h-3.5 w-3.5" />
-              Edit
-            </Button>
+            <div className="flex gap-2">
+              <SharingDrawer entryId={entry.id} />
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => navigate(`/write/${entry.id}`)}
+              >
+                <Pencil className="mr-1.5 h-3.5 w-3.5" />
+                Edit
+              </Button>
+            </div>
           )}
         </div>
 

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router-dom'
 import AppLayout from '@/components/layout/AppLayout'
 import SplitPaneEditor from '@/components/editor/SplitPaneEditor'
 import { supabase } from '@/lib/supabase'
@@ -15,7 +15,12 @@ type Step = 'picking' | 'editing'
 
 export default function WritePage() {
   const { entryId } = useParams<{ entryId?: string }>()
+  const [searchParams] = useSearchParams()
   const { user } = useAuthStore()
+
+  // Campaign pre-fill context (from DayCard or streak_challenge CTA)
+  const campaignId = searchParams.get('campaignId') ?? undefined
+  const campaignDay = searchParams.get('day') ? parseInt(searchParams.get('day')!, 10) : undefined
 
   const [step, setStep] = useState<Step>(entryId ? 'editing' : 'picking')
   const [templates, setTemplates] = useState<TemplateRow[]>([])
@@ -24,33 +29,56 @@ export default function WritePage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // Load templates (always needed)
+  // Load templates + optionally auto-select campaign's template
   useEffect(() => {
     if (!user) return
-    supabase
-      .from('qt_templates')
-      .select('*')
-      .or(`is_system.eq.true,created_by.eq.${user.id}`)
-      .order('is_system', { ascending: false })
-      .order('name')
-      .then(({ data, error: err }) => {
-        if (err) {
-          setError('Could not load templates.')
-          return
-        }
-        const rows: TemplateRow[] = (data ?? []).map((t) => ({
-          ...t,
-          parsedSections: Array.isArray(t.sections)
-            ? (t.sections as unknown as TemplateSection[])
-            : [],
-        }))
-        setTemplates(rows)
 
-        // If editing, load entry first
-        if (!entryId) {
-          setLoading(false)
+    async function loadTemplates() {
+      const { data, error: err } = await supabase
+        .from('qt_templates')
+        .select('*')
+        .or(`is_system.eq.true,created_by.eq.${user!.id}`)
+        .order('is_system', { ascending: false })
+        .order('name')
+
+      if (err) {
+        setError('Could not load templates.')
+        return
+      }
+
+      const rows: TemplateRow[] = (data ?? []).map((t) => ({
+        ...t,
+        parsedSections: Array.isArray(t.sections)
+          ? (t.sections as unknown as TemplateSection[])
+          : [],
+      }))
+      setTemplates(rows)
+
+      // Auto-select campaign template when starting from a campaign context
+      if (campaignId && !entryId) {
+        const { data: camp } = await supabase
+          .from('campaigns')
+          .select('template_id')
+          .eq('id', campaignId)
+          .single()
+        if (camp?.template_id) {
+          const tmpl = rows.find((t) => t.id === camp.template_id)
+          if (tmpl) {
+            setSelectedTemplate(tmpl)
+            setStep('editing')
+            setLoading(false)
+            return
+          }
         }
-      })
+      }
+
+      if (!entryId) {
+        setLoading(false)
+      }
+    }
+
+    loadTemplates()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, entryId])
 
   // Load existing entry when editing
@@ -158,6 +186,8 @@ export default function WritePage() {
           templateId={selectedTemplate.id}
           sections={selectedTemplate.parsedSections}
           entry={existingEntry}
+          campaignId={campaignId}
+          campaignDay={campaignDay}
         />
       </div>
     </div>

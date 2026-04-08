@@ -1,12 +1,13 @@
+import { useParams } from 'react-router-dom'
 import AppLayout from '@/components/layout/AppLayout'
+import CampaignCreator from '@/components/campaigns/CampaignCreator'
 
 export default function CampaignEditPage() {
+  const { campaignId } = useParams<{ campaignId: string }>()
+
   return (
     <AppLayout>
-      <div className="px-4 py-6">
-        <h2 className="text-xl font-semibold">Edit Campaign</h2>
-        <p className="mt-2 text-sm text-muted-foreground">CampaignCreator — coming in Phase 4.</p>
-      </div>
+      <CampaignCreator campaignId={campaignId} />
     </AppLayout>
   )
 }

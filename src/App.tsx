@@ -10,6 +10,7 @@ import BiblePage from '@/pages/BiblePage'
 import EntriesPage from '@/pages/EntriesPage'
 import EntryDetailPage from '@/pages/EntryDetailPage'
 import CampaignsPage from '@/pages/CampaignsPage'
+import CampaignNewPage from '@/pages/CampaignNewPage'
 import CampaignDetailPage from '@/pages/CampaignDetailPage'
 import CampaignEditPage from '@/pages/CampaignEditPage'
 import GroupsPage from '@/pages/GroupsPage'
@@ -112,12 +113,12 @@ export default function App() {
         path="/campaigns/new"
         element={
           <ProtectedRoute>
-            <CampaignDetailPage />
+            <CampaignNewPage />
           </ProtectedRoute>
         }
       />
       <Route
-        path="/campaigns/:id"
+        path="/campaigns/:campaignId"
         element={
           <ProtectedRoute>
             <CampaignDetailPage />
@@ -125,7 +126,7 @@ export default function App() {
         }
       />
       <Route
-        path="/campaigns/:id/edit"
+        path="/campaigns/:campaignId/edit"
         element={
           <ProtectedRoute>
             <CampaignEditPage />

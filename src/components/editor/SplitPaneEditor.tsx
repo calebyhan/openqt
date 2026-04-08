@@ -19,6 +19,9 @@ interface Props {
   /** Existing entry to edit; null for new entry */
   entry?: Tables<'qt_entries'> | null
   defaultTranslation?: string
+  /** Campaign context — set when started from a DayCard or streak CTA */
+  campaignId?: string
+  campaignDay?: number
 }
 
 const AUTO_SAVE_INTERVAL_MS = 30_000
@@ -28,6 +31,8 @@ export default function SplitPaneEditor({
   sections,
   entry = null,
   defaultTranslation = 'NIV',
+  campaignId,
+  campaignDay,
 }: Props) {
   const { user } = useAuthStore()
   const navigate = useNavigate()
@@ -73,6 +78,8 @@ export default function SplitPaneEditor({
           verse_refs: verseRefsRef.current,
           is_draft: isDraft,
           updated_at: new Date().toISOString(),
+          ...(campaignId ? { campaign_id: campaignId } : {}),
+          ...(campaignDay !== undefined ? { campaign_day: campaignDay } : {}),
         }
         if (entryId) {
           const { error } = await supabase
@@ -96,7 +103,7 @@ export default function SplitPaneEditor({
         setSaving(false)
       }
     },
-    [user, templateId, entryId],
+    [user, templateId, entryId, campaignId, campaignDay],
   )
 
   // Auto-save every 30s as draft

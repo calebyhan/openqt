@@ -320,6 +320,38 @@ export type Database = {
           },
         ]
       }
+      notification_log: {
+        Row: {
+          id: string
+          ref_date: string
+          sent_at: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          ref_date?: string
+          sent_at?: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          ref_date?: string
+          sent_at?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -566,7 +598,27 @@ export type Database = {
     Functions: {
       can_comment_on_entry: { Args: { eid: string }; Returns: boolean }
       can_see_entry: { Args: { eid: string }; Returns: boolean }
+      dispatch_campaign_day_available: { Args: never; Returns: undefined }
+      dispatch_daily_reminders: { Args: never; Returns: undefined }
+      dispatch_streak_warnings: { Args: never; Returns: undefined }
+      find_group_by_invite_code: {
+        Args: { code: string }
+        Returns: {
+          id: string
+          name: string
+        }[]
+      }
+      is_campaign_creator: { Args: { p_campaign_id: string }; Returns: boolean }
       is_group_member: { Args: { gid: string }; Returns: boolean }
+      send_push_notification: {
+        Args: {
+          p_body: string
+          p_title: string
+          p_url?: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

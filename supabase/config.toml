@@ -363,6 +363,9 @@ allow_dynamic_registration = false
 [functions.bible-proxy]
 verify_jwt = false
 
+[functions.web-push]
+verify_jwt = false   # caller auth is handled inside the function (supports both user JWT and service role)
+
 [edge_runtime]
 enabled = true
 # Supported request policies: `oneshot`, `per_worker`.

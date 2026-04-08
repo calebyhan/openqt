@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/authStore'
 import BibleReader from '@/components/bible/BibleReader'
 import TemplateForm, { type TemplateFormHandle } from '@/components/editor/TemplateForm'
+import NotificationPermissionPrompt from '@/components/notifications/NotificationPermissionPrompt'
 import type { TemplateSection, EntryContent } from '@/types/template'
 import type { VerseRef } from '@/types/bible'
 import type { Tables } from '@/types/supabase'
@@ -59,6 +60,7 @@ export default function SplitPaneEditor({
   const [saving, setSaving] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [showNotifPrompt, setShowNotifPrompt] = useState(false)
 
   const contentRef = useRef(content)
   const verseRefsRef = useRef(verseRefs)
@@ -66,10 +68,11 @@ export default function SplitPaneEditor({
   verseRefsRef.current = verseRefs
 
   const saveDraft = useCallback(
-    async (isDraft: boolean) => {
-      if (!user) return
+    async (isDraft: boolean): Promise<boolean> => {
+      if (!user) return false
       setSaving(true)
       setSaveError(null)
+      let promptShown = false
       try {
         const payload = {
           template_id: templateId,
@@ -97,13 +100,28 @@ export default function SplitPaneEditor({
           setEntryId(data.id)
         }
         setLastSaved(new Date())
+
+        // On first non-draft save for a new entry, offer push notifications if
+        // the user has no subscription yet and hasn't blocked permission.
+        if (!entry?.id && !isDraft && 'Notification' in window && Notification.permission !== 'denied') {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('push_subscription')
+            .eq('id', user.id)
+            .single()
+          if (!profile?.push_subscription) {
+            setShowNotifPrompt(true)
+            promptShown = true
+          }
+        }
       } catch (err) {
         setSaveError(err instanceof Error ? err.message : 'Save failed')
       } finally {
         setSaving(false)
       }
+      return promptShown
     },
-    [user, templateId, entryId, campaignId, campaignDay],
+    [user, templateId, entryId, campaignId, campaignDay, entry?.id],
   )
 
   // Auto-save every 30s as draft
@@ -144,12 +162,23 @@ export default function SplitPaneEditor({
   }
 
   async function handleSave() {
-    await saveDraft(false)
-    navigate('/entries')
+    const promptShown = await saveDraft(false)
+    // If the notif prompt is being shown, defer navigation to its onDismiss.
+    if (!promptShown) {
+      navigate('/entries')
+    }
   }
 
   return (
     <div className="flex h-full flex-col">
+      {showNotifPrompt && (
+        <NotificationPermissionPrompt
+          onDismiss={() => {
+            setShowNotifPrompt(false)
+            navigate('/entries')
+          }}
+        />
+      )}
       {/* Toolbar */}
       <div className="flex items-center justify-between border-b px-4 py-2">
         <div className="text-sm text-muted-foreground">

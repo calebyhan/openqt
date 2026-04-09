@@ -188,6 +188,7 @@ export default function BibleReader({
             {chapters.map((ch) => (
               <button
                 key={ch.id}
+                aria-label={`Chapter ${ch.number}`}
                 className="rounded-md border py-2 text-center text-sm hover:bg-accent"
                 onClick={() => selectChapter(ch)}
               >

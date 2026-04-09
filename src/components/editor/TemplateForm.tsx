@@ -118,9 +118,10 @@ const TemplateForm = forwardRef<TemplateFormHandle, Props>(
                       {!readOnly && (
                         <button
                           className="ml-0.5 opacity-60 hover:opacity-100"
+                          aria-label={`Remove verse ${vr.book} ${vr.chapter}:${vr.verse}`}
                           onClick={() => removeVerseRef(section.key, i)}
                         >
-                          <X className="h-3 w-3" />
+                          <X className="h-3 w-3" aria-hidden="true" />
                         </button>
                       )}
                     </Badge>

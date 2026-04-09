@@ -191,7 +191,7 @@ export default function CampaignDetailPage() {
 
         {/* Streak stats */}
         {isMember && (
-          <div className="flex items-center gap-4 rounded-lg border px-4 py-3">
+          <div className="flex flex-wrap items-center gap-4 rounded-lg border px-4 py-3">
             <div className="flex items-center gap-1.5">
               <Flame className="h-4 w-4 text-orange-500" />
               <div>
